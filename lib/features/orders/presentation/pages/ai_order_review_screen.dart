@@ -6,7 +6,13 @@ import '../widgets/order_route_map_preview.dart';
 
 class AiOrderReviewScreen extends StatefulWidget {
   final String initialPrompt;
-  const AiOrderReviewScreen({super.key, required this.initialPrompt});
+  final List<AiOrderItem> generatedItems;
+
+  const AiOrderReviewScreen({
+    super.key,
+    required this.initialPrompt,
+    required this.generatedItems,
+  });
 
   @override
   State<AiOrderReviewScreen> createState() => _AiOrderReviewScreenState();
@@ -14,11 +20,13 @@ class AiOrderReviewScreen extends StatefulWidget {
 
 class _AiOrderReviewScreenState extends State<AiOrderReviewScreen> {
   final double _deliveryFee = 10.00;
-  final List<AiOrderItem> _items = [
-    AiOrderItem(name: 'خضار سلطة طازجة', quantity: '2', price: 8.00),
-    AiOrderItem(name: 'مشروبات غازية', quantity: '6 علب', price: 15.00),
-    AiOrderItem(name: 'خبز طازج', quantity: '1', price: 12.00),
-  ];
+  late List<AiOrderItem> _items;
+
+  @override
+  void initState() {
+    super.initState();
+    _items = List.from(widget.generatedItems);
+  }
 
   double get _estimatedTotal {
     return _items
@@ -40,12 +48,12 @@ class _AiOrderReviewScreenState extends State<AiOrderReviewScreen> {
           children: [
             TextField(
               controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'اسم الغرض (مثلاً: عصير برتقال)'),
+              decoration: const InputDecoration(labelText: 'اسم الغرض'),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: qtyCtrl,
-              decoration: const InputDecoration(labelText: 'الكمية (مثلاً: 2)'),
+              decoration: const InputDecoration(labelText: 'الكمية'),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -90,14 +98,9 @@ class _AiOrderReviewScreenState extends State<AiOrderReviewScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 0,
-        centerTitle: false,
         title: const Text(
           'تجهيز الطلب بالذكاء الاصطناعي',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(color: AppColors.textPrimary, fontSize: 17, fontWeight: FontWeight.w700),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
@@ -131,18 +134,13 @@ class _AiOrderReviewScreenState extends State<AiOrderReviewScreen> {
               ),
             ),
           ),
-          // الشريط السفلي الثابت للتكلفة ونشر الطلب
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
             decoration: BoxDecoration(
               color: AppColors.surface,
               border: const Border(top: BorderSide(color: AppColors.borderLight)),
               boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, -4),
-                ),
+                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -4)),
               ],
             ),
             child: Column(
@@ -151,10 +149,7 @@ class _AiOrderReviewScreenState extends State<AiOrderReviewScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'التكلفة التقديرية',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
+                    const Text('التكلفة التقديرية', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
                     Text(
                       '${_estimatedTotal.toStringAsFixed(2)} ₪',
                       style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w700),
@@ -165,10 +160,7 @@ class _AiOrderReviewScreenState extends State<AiOrderReviewScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'رسوم التوصيل',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
+                    const Text('رسوم التوصيل', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
                     Text(
                       '${_deliveryFee.toStringAsFixed(2)} ₪',
                       style: const TextStyle(color: AppColors.primary, fontSize: 15, fontWeight: FontWeight.w700),

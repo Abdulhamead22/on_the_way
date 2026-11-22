@@ -1,18 +1,22 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:flutter_application_1/features/auth/presentation/pages/user_profile_screen.dart';
-import 'package:flutter_application_1/features/chat/presentation/pages/chats_list_screen.dart';
-import 'package:flutter_application_1/features/orders/presentation/pages/courier_order_details_screen.dart';
-import 'package:flutter_application_1/features/wallet/presentation/pages/wallet_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/custom_bottom_nav.dart';
+import '../../../../injection_container.dart' as di;
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../auth/presentation/pages/user_profile_screen.dart';
+import '../../../chat/presentation/pages/chats_list_screen.dart';
 import '../../../tracking/presentation/pages/live_tracking_screen.dart';
+import '../../../wallet/presentation/pages/wallet_screen.dart';
+import '../cubit/ai_order_cubit.dart';
+import '../cubit/ai_order_state.dart';
 import '../widgets/active_order_card.dart';
 import '../widgets/ai_assistant_card.dart';
 import '../widgets/courier_home_view.dart';
 import '../widgets/home_header_widget.dart';
 import 'ai_order_review_screen.dart';
+import 'courier_order_details_screen.dart';
 import 'my_orders_screen.dart';
 
 class MainLayoutScreen extends StatefulWidget {
@@ -39,8 +43,6 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     _aiPromptController.dispose();
     super.dispose();
   }
-
-  
 
   @override
   Widget build(BuildContext context) {
@@ -100,78 +102,98 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                       );
                     },
                   )
-                : _buildCustomerContent(),
+                : buildCustomerContent(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCustomerContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AiAssistantCard(
-          controller: _aiPromptController,
-          onPrepareOrder: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AiOrderReviewScreen(
-                  initialPrompt: _aiPromptController.text.trim(),
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'طلباتي النشطة',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+  Widget buildCustomerContent() {
+    return BlocConsumer<AiOrderCubit, AiOrderState>(
+      listener: (context, state) {
+        if (state is AiOrderError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        } else if (state is AiOrderSuccess) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AiOrderReviewScreen(
+                initialPrompt: state.originalPrompt,
+                generatedItems: state.items,
               ),
             ),
-            TextButton(
-              onPressed: () => setState(() => _currentNavIndex = 1),
-              child: const Text(
-                'عرض الكل',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+          );
+        }
+      },
+      builder: (context, state) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AiAssistantCard(
+              controller: _aiPromptController,
+              isLoading: state is AiOrderLoading,
+              onPrepareOrder: () {
+                // 👇 أضف اسم الـ Cubit أو الـ Bloc هنا
+                context.read<AiOrderCubit>().generateOrderFromPrompt(
+                  _aiPromptController.text,
+                );
+              },
+            ),
+
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'طلباتي النشطة',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
+                TextButton(
+                  onPressed: () => setState(() => _currentNavIndex = 1),
+                  child: const Text(
+                    'عرض الكل',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ActiveOrderCard(
+              orderNumber: '#4821',
+              title: 'طلب من سوبرماركت الدرة',
+              subtitle: '5 أغراض · الدفع من المحفظة',
+              statusText: 'قيد التوصيل',
+              currentStep: 2,
+              courierName: 'محمد الخطيب',
+              courierRating: '4.9',
+              courierVehicle: 'دراجة نارية',
+              etaText: 'يصل خلال 12 دقيقة',
+              onTrackTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LiveTrackingScreen()),
+                );
+              },
+              onChatTap: () => setState(() => _currentNavIndex = 2),
+              onCallTap: () {},
             ),
           ],
-        ),
-        const SizedBox(height: 8),
-        ActiveOrderCard(
-          orderNumber: '#4821',
-          title: 'طلب من سوبرماركت الدرة',
-          subtitle: '5 أغراض · الدفع من المحفظة',
-          statusText: 'قيد التوصيل',
-          currentStep: 2,
-          courierName: 'محمد الخطيب',
-          courierRating: '4.9',
-          courierVehicle: 'دراجة نارية',
-          etaText: 'يصل خلال 12 دقيقة',
-          onTrackTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const LiveTrackingScreen(),
-              ),
-            );
-          },
-          onChatTap: () => setState(() => _currentNavIndex = 2),
-          onCallTap: () {},
-        ),
-      ],
+        );
+      },
     );
   }
 }
