@@ -7,7 +7,11 @@ import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/presentation/cubit/auth_cubit.dart';
+import 'features/orders/data/datasources/orders_remote_datasource.dart';
+import 'features/orders/data/repositories/orders_repository_impl.dart';
+import 'features/orders/domain/repositories/orders_repository.dart';
 import 'features/orders/presentation/cubit/ai_order_cubit.dart';
+import 'features/orders/presentation/cubit/orders_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -27,6 +31,13 @@ Future<void> initDependencies() async {
     () => AuthRemoteDataSourceImpl(sl()),
   );
 
-  // Features - Orders (AI)
+  // Features - Orders & AI
   sl.registerFactory(() => AiOrderCubit(geminiService: sl()));
+  sl.registerFactory(() => OrdersCubit(ordersRepository: sl()));
+  sl.registerLazySingleton<OrdersRepository>(
+    () => OrdersRepositoryImpl(remoteDataSource: sl(), networkInfo: sl()),
+  );
+  sl.registerLazySingleton<OrdersRemoteDataSource>(
+    () => OrdersRemoteDataSourceImpl(sl()),
+  );
 }

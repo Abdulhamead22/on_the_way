@@ -8,6 +8,7 @@ import 'features/auth/presentation/cubit/auth_cubit.dart';
 import 'features/auth/presentation/cubit/auth_state.dart';
 import 'features/auth/presentation/pages/auth_screen.dart';
 import 'features/orders/presentation/cubit/ai_order_cubit.dart';
+import 'features/orders/presentation/cubit/orders_cubit.dart';
 import 'features/orders/presentation/pages/main_layout_screen.dart';
 import 'injection_container.dart' as di;
 
@@ -38,6 +39,9 @@ class OnTheWayApp extends StatelessWidget {
         ),
         BlocProvider<AiOrderCubit>(
           create: (_) => di.sl<AiOrderCubit>(),
+        ),
+        BlocProvider<OrdersCubit>(
+          create: (_) => di.sl<OrdersCubit>(),
         ),
       ],
       child: MaterialApp(
